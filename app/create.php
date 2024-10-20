@@ -1,31 +1,39 @@
-<?php include 'config.php'; ?>
-
 <?php
+// Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get form data
     $name = $_POST['name'];
     $email = $_POST['email'];
 
-    $sql = "INSERT INTO users (name, email) VALUES ('$name', '$email')";
-    
-    if ($conn->query($sql) === TRUE) {
-        header('Location: index.php');
-    } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+    // Database connection (adjust with your actual credentials)
+    $servername = "db";
+    $username = "myuser";
+    $password = "mypassword";
+    $dbname = "myappdb";
+
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
     }
+
+    // Insert user into the database
+    $sql = "INSERT INTO users (name, email) VALUES (?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $name, $email);
+
+    if ($stmt->execute()) {
+        // Redirect to the index page after successful creation
+        header("Location: index.php");
+        exit();  // Always exit after sending a header
+    } else {
+        echo "Error: " . $conn->error;
+    }
+
+    // Close the connection
+    $stmt->close();
+    $conn->close();
 }
 ?>
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create User</title>
-</head>
-<body>
-    <h2>Create User</h2>
-    <form method="post" action="">
-        Name: <input type="text" name="name" required><br>
-        Email: <input type="email" name="email" required><br>
-        <button type="submit">Create</button>
-    </form>
-</body>
-</html>
