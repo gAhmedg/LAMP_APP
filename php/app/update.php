@@ -1,23 +1,40 @@
-<?php include 'config.php'; ?>
-
 <?php
+include 'config.php';
+
 $id = $_GET['id'];
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $name = $_POST['name'];
     $email = $_POST['email'];
 
-    $sql = "UPDATE users SET name='$name', email='$email' WHERE id=$id";
-    
-    if ($conn->query($sql) === TRUE) {
-        header('Location: index.php');
+    // Prepare and execute the SQL statement
+    $sql = "UPDATE users SET name = ?, email = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssi", $name, $email, $id);
+
+    if ($stmt->execute()) {
+        // Redirect to the index page after successful update
+        header("Location: index.php");
+        exit(); // Exit after header redirection
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "Error updating record: " . $conn->error;
     }
+
+    // Close the statement and connection
+    $stmt->close();
+    $conn->close();
 } else {
-    $sql = "SELECT * FROM users WHERE id=$id";
-    $result = $conn->query($sql);
+    // Fetch user data to pre-populate the form
+    $sql = "SELECT * FROM users WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
     $row = $result->fetch_assoc();
+
+    // Close the statement and connection
+    $stmt->close();
+    $conn->close();
 }
 ?>
 
